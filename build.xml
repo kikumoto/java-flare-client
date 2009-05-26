@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="java_flareclient" default="package" basedir=".">
+
+	<property name="project.title"   value="java flare client" />
+	<property name="code.dir"        value="src/com/danga/MemCached" />
+	<property name="doc.dir"         value="doc" />
+	<property name="src.dir"         value="src" />
+	<property name="build.dir"       value="classes" />
+	
+	<property environment="env"/>
+	<property file="build.properties"/>
+	<property name="project" value="java_flareclient"/>
+
+	<path id="project.class.path">
+		<pathelement path = "lib/log4j.jar"/>
+	</path>
+
+	<!-- package release -->
+	<!-- ant package -Dver=release_1.3 -Dlog4j=1 -->
+	<target name="package" depends="clean, setup, log4j, logger, pkg-compile, jar, javadoc">
+		<tar tarfile="java_flareclient-${ver}.tar.gz" basedir="." includes="java_flareclient-${ver}/**" compression="gzip"/>
+		<zip destfile="java_flareclient-${ver}.zip" basedir="." includes="java_flareclient-${ver}/**"/>
+		<copy file="java_flareclient-${ver}/java_flareclient-${ver}.jar" todir="."/>
+
+		<checksum file="java_flareclient-${ver}.tar.gz"/>
+		<checksum file="java_flareclient-${ver}.zip"/>
+		<checksum file="java_flareclient-${ver}.jar"/>
+		<delete dir="java_flareclient-${ver}" />
+
+		<tar tarfile="java_flareclient-${ver}.tar" basedir="." includes="java_flareclient-${ver}.*"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="java_flareclient-${ver}" />
+		<delete file="java_flareclient-${ver}.tar.gz"/>
+		<delete file="java_flareclient-${ver}.zip"/>
+		<delete file="java_flareclient-${ver}.jar"/>
+		<delete file="java_flareclient-${ver}.tar.gz.MD5"/>
+		<delete file="java_flareclient-${ver}.zip.MD5"/>
+		<delete file="java_flareclient-${ver}.jar.MD5"/>
+	</target>
+
+	<target name="setup">
+		<mkdir dir="java_flareclient-${ver}"/>
+		<mkdir dir="java_flareclient-${ver}/javadocs"/>
+		<mkdir dir="java_flareclient-${ver}/src/com/danga/MemCached"/>
+		<mkdir dir="java_flareclient-${ver}/classes"/>
+		<mkdir dir="java_flareclient-${ver}/doc"/>
+
+		<!-- copy source -->
+		<copy todir="java_flareclient-${ver}/src/com/danga/MemCached">
+			<fileset dir="${code.dir}" defaultexcludes="true" excludes="**/*.xml **/*.swp **/*.swo"/>
+        </copy>
+
+		<!-- copy doc dir -->
+		<copy todir="java_flareclient-${ver}/doc">
+			<fileset dir="${doc.dir}" defaultexcludes="true" excludes="**/*.swp **/*.swo"/>
+        </copy>
+
+		<!-- copy license to root -->
+		<copy file="${doc.dir}/LICENSE.txt" todir="java_flareclient-${ver}"/>
+
+		<!-- copy changelog to root -->
+		<copy file="${doc.dir}/CHANGELOG.txt" todir="java_flareclient-${ver}"/>
+	</target>
+
+	<!-- if logger is log4j then need to filter to make sure import exists -->
+	<target name="log4j" if="log4j" depends="clean, setup">
+		<replace dir="java_flareclient-${ver}/src/com/danga/MemCached" token="//import org.apache.log4j.Logger;" value="import org.apache.log4j.Logger;">
+			<include name="**/*.java"/>
+		</replace>
+	</target>
+
+	<target name="logger" unless="log4j" depends="clean, setup">
+		<replace dir="java_flareclient-${ver}/src/com/danga/MemCached" token="import org.apache.log4j.Logger;" value="//import org.apache.log4j.Logger;">
+			<include name="**/*.java"/>
+		</replace>
+		<replace dir="java_flareclient-${ver}/jp/gree/flare" token="import org.apache.log4j.Logger;" value="//import org.apache.log4j.Logger;">
+			<include name="**/*.java"/>
+		</replace>
+	</target>
+
+	<!-- javadocs -->
+	<target name="javadoc" depends="clean, setup, log4j, logger">
+		<delete>
+			<fileset dir="java_flareclient-${ver}/javadocs" />
+		</delete>
+
+		<javadoc sourcepath="java_flareclient-${ver}/src"
+			destdir="java_flareclient-${ver}/javadocs"
+			packagenames= "com.danga.*"
+			author= "true"
+			private="true"
+			version="true"
+			defaultexcludes="yes"
+			classpathref="project.class.path"
+			use="true"
+			windowtitle="java memcached client api documentation"
+			doctitle="&lt;h1&gt;${project.title} documentation (Version ${ver})&lt;/h1&gt;"
+			bottom="Copyright &#169; 2005 - greg whalin">
+    	</javadoc>
+	</target> 
+
+	<!-- compilation target for packeging operations -->
+	<target name="pkg-compile" depends="clean, setup, log4j, logger">
+		<javac debug="yes" srcdir="java_flareclient-${ver}/src" destdir="java_flareclient-${ver}/classes" deprecation="true">
+			<classpath refid="project.class.path"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="pkg-compile">
+		<jar compress="yes" jarfile="java_flareclient-${ver}/java_flareclient-${ver}.jar" basedir="java_flareclient-${ver}/classes"/>
+    </target>
+
+	<!-- compilation target -->
+	<target name="compile">
+		<mkdir dir="${build.dir}"/>
+		<javac debug="yes" srcdir="${src.dir}" destdir="${build.dir}" deprecation="true" compiler="modern">
+			<compilerarg value="-Xlint:unchecked"/>
+			<classpath refid="project.class.path"/>
+		</javac>
+	</target>
+</project>
